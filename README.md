@@ -161,6 +161,7 @@ PORT=3001
 
 Este projeto está sob a licença MIT.
 
-## 👨‍💻 Autor
+## 👨‍💻 Autores
 
-Lucas Freire de Siqueira - [seu-github](https://github.com/LKSFDS)
+Lucas Freire de Siqueira - [link github](https://github.com/LKSFDS)
+Mateus Rodrigues Lopes - [link github](https://github.com/mtslopes13)
