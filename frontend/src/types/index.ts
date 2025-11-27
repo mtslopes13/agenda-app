@@ -75,9 +75,23 @@ export interface CalendarEvent {
   allDay: boolean;
   type: string;
   userId?: string;
+  color?: string; // 👈 NOVO
 }
 
 export interface DailyData {
   events: CalendarEvent[];
   appointments: Appointment[];
+}
+
+export interface Appointment {
+  id: string;
+  title: string;
+  description?: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location?: string;
+  userId: string;
+  eventId?: string;
+  color?: string;
 }

@@ -10,7 +10,7 @@ function App() {
   const [currentView, setCurrentView] = useState<'tasks' | 'finances' | 'calendar'>('tasks');
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // 👈 NOVO
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -45,59 +45,39 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <header style={{ 
-        backgroundColor: '#343a40', 
-        color: 'white', 
-        padding: '1rem',
-        marginBottom: '2rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <div>
-          <h1>📅 Minha Agenda</h1>
-          <small style={{ opacity: 0.8 }}>Olá, {user.name}</small>
+    <div className="app-root">
+      <header className="app-header">
+        <div className="app-header-left">
+          <h1 className="app-title">📅 Minha Agenda</h1>
+          <small className="app-user">Olá, {user.name}</small>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <nav style={{ display: 'flex', gap: '10px' }}>
-            <button 
+        <div className="app-header-right">
+          <nav className="app-nav">
+            <button
               onClick={() => setCurrentView('tasks')}
-              style={{ 
-                backgroundColor: currentView === 'tasks' ? '#007bff' : 'transparent',
-                color: 'white',
-                border: '1px solid white',
-                padding: '8px 16px',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className={
+                'app-nav-button' +
+                (currentView === 'tasks' ? ' app-nav-button--active' : '')
+              }
             >
               📝 Visão Diária
             </button>
-            <button 
+            <button
               onClick={() => setCurrentView('calendar')}
-              style={{ 
-                backgroundColor: currentView === 'calendar' ? '#007bff' : 'transparent',
-                color: 'white',
-                border: '1px solid white',
-                padding: '8px 16px',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className={
+                'app-nav-button' +
+                (currentView === 'calendar' ? ' app-nav-button--active' : '')
+              }
             >
               📆 Calendário
             </button>
-            <button 
+            <button
               onClick={() => setCurrentView('finances')}
-              style={{ 
-                backgroundColor: currentView === 'finances' ? '#007bff' : 'transparent',
-                color: 'white',
-                border: '1px solid white',
-                padding: '8px 16px',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              className={
+                'app-nav-button' +
+                (currentView === 'finances' ? ' app-nav-button--active' : '')
+              }
             >
               💰 Finanças
             </button>
@@ -105,32 +85,23 @@ function App() {
 
           <button
             onClick={handleLogout}
-            style={{
-              marginLeft: '1rem',
-              padding: '6px 12px',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '0.9rem'
-            }}
+            className="app-logout-button"
           >
             Sair
           </button>
         </div>
       </header>
 
-      <main>
+      <main className="app-main">
         {currentView === 'tasks' && (
-          <DailyView selectedDate={selectedDate} /> /* 👈 passa o dia selecionado */
+          <DailyView selectedDate={selectedDate} />
         )}
         {currentView === 'calendar' && (
           <CalendarView
             selectedDate={selectedDate}
             onSelectDate={(date) => {
               setSelectedDate(date);
-              setCurrentView('tasks'); // abre a visão diária daquele dia
+              setCurrentView('tasks');
             }}
           />
         )}

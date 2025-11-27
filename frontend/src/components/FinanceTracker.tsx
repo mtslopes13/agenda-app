@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Finance, MonthlySummary } from '../types';
 import { financeService } from '../services/api';
+import './style/FinanceTracker.css';
 
 const FinanceTracker: React.FC = () => {
   const [transactions, setTransactions] = useState<Finance[]>([]);
@@ -63,70 +64,54 @@ const FinanceTracker: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-      <h2>💰 Controle Financeiro</h2>
+    <div className="finance-container">
+      <h2 className="finance-title">💰 Controle Financeiro</h2>
 
       {summary && (
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '20px',
-          marginBottom: '20px'
-        }}>
-          <div style={{ padding: '15px', backgroundColor: '#d4edda', borderRadius: '8px' }}>
+        <div className="finance-summary-grid">
+          <div className="finance-summary-card finance-summary-income">
             <h3>Receitas</h3>
-            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#155724' }}>
+            <p className="finance-summary-value">
               R$ {summary.totals.income.toFixed(2)}
             </p>
           </div>
-          <div style={{ padding: '15px', backgroundColor: '#f8d7da', borderRadius: '8px' }}>
+          <div className="finance-summary-card finance-summary-expense">
             <h3>Despesas</h3>
-            <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#721c24' }}>
+            <p className="finance-summary-value">
               R$ {summary.totals.expenses.toFixed(2)}
             </p>
           </div>
-          <div style={{ padding: '15px', backgroundColor: '#d1ecf1', borderRadius: '8px' }}>
+          <div className="finance-summary-card finance-summary-balance">
             <h3>Saldo</h3>
-            <p style={{ 
-              fontSize: '24px', 
-              fontWeight: 'bold', 
-              color: summary.balance >= 0 ? '#155724' : '#721c24' 
-            }}>
+            <p
+              className={
+                'finance-summary-value ' +
+                (summary.balance >= 0
+                  ? 'finance-summary-balance-positive'
+                  : 'finance-summary-balance-negative')
+              }
+            >
               R$ {summary.balance.toFixed(2)}
             </p>
           </div>
         </div>
       )}
 
-      <button 
+      <button
         onClick={() => setShowForm(true)}
-        style={{
-          padding: '10px 20px',
-          backgroundColor: '#28a745',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          marginBottom: '20px'
-        }}
+        className="finance-new-btn"
       >
         + Nova Transação
       </button>
 
       {showForm && (
-        <div style={{ 
-          padding: '20px', 
-          border: '1px solid #ddd', 
-          borderRadius: '8px',
-          marginBottom: '20px',
-          backgroundColor: '#f8f9fa'
-        }}>
+        <div className="finance-form-card">
           <h3>Adicionar Transação</h3>
-          <div style={{ display: 'grid', gap: '10px' }}>
+          <div className="finance-form-grid">
             <select
               value={formData.type}
-              onChange={(e) => setFormData({...formData, type: e.target.value})}
-              style={{ padding: '8px' }}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              className="finance-input"
             >
               <option value="EXPENSE">Despesa</option>
               <option value="INCOME">Receita</option>
@@ -135,48 +120,33 @@ const FinanceTracker: React.FC = () => {
               type="number"
               placeholder="Valor"
               value={formData.amount}
-              onChange={(e) => setFormData({...formData, amount: e.target.value})}
-              style={{ padding: '8px' }}
+              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              className="finance-input"
             />
             <input
               type="text"
               placeholder="Descrição"
               value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-              style={{ padding: '8px' }}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="finance-input"
             />
             <input
               type="text"
               placeholder="Categoria"
               value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
-              style={{ padding: '8px' }}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              className="finance-input"
             />
-            <div>
-              <button 
-                onClick={addTransaction} 
-                style={{ 
-                  marginRight: '10px',
-                  padding: '8px 16px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+            <div className="finance-form-actions">
+              <button
+                onClick={addTransaction}
+                className="finance-btn finance-btn-primary"
               >
                 Adicionar
               </button>
-              <button 
+              <button
                 onClick={() => setShowForm(false)}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
+                className="finance-btn finance-btn-secondary"
               >
                 Cancelar
               </button>
@@ -185,42 +155,41 @@ const FinanceTracker: React.FC = () => {
         </div>
       )}
 
-      <div>
+      <div className="finance-transactions">
         <h3>Últimas Transações</h3>
-        {transactions.map(transaction => (
-          <div 
+        {transactions.map((transaction) => (
+          <div
             key={transaction.id}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '10px',
-              border: '1px solid #eee',
-              marginBottom: '5px',
-              borderRadius: '4px',
-              backgroundColor: transaction.type === 'INCOME' ? '#f8fff9' : '#fff8f8'
-            }}
+            className={
+              'finance-transaction-item ' +
+              (transaction.type === 'INCOME'
+                ? 'finance-transaction-income'
+                : 'finance-transaction-expense')
+            }
           >
-            <div>
+            <div className="finance-transaction-info">
               <strong>{transaction.description}</strong>
               <br />
-              <small>{transaction.category} • {new Date(transaction.date).toLocaleDateString()}</small>
+              <small>
+                {transaction.category} •{' '}
+                {new Date(transaction.date).toLocaleDateString()}
+              </small>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ 
-                color: transaction.type === 'INCOME' ? '#28a745' : '#dc3545',
-                fontWeight: 'bold'
-              }}>
-                {transaction.type === 'INCOME' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
+            <div className="finance-transaction-right">
+              <span
+                className={
+                  'finance-amount ' +
+                  (transaction.type === 'INCOME'
+                    ? 'finance-amount-income'
+                    : 'finance-amount-expense')
+                }
+              >
+                {transaction.type === 'INCOME' ? '+' : '-'} R${' '}
+                {transaction.amount.toFixed(2)}
               </span>
-              <button 
+              <button
                 onClick={() => deleteTransaction(transaction.id)}
-                style={{
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: '#dc3545'
-                }}
+                className="finance-delete-btn"
               >
                 🗑️
               </button>

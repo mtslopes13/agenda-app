@@ -88,32 +88,34 @@ model Holiday {
 }
 
 model CalendarEvent {
-  id           String      @id @default(cuid())
+  id           String        @id @default(cuid())
   title        String
   description  String?
   date         DateTime
   allDay       Boolean      @default(true)
   type         EventType    @default(PERSONAL)
+  color        String?
 
   userId       String?
   user         User?        @relation(fields: [userId], references: [id])
 
   appointments Appointment[]
-  
+
   @@map("calendar_events")
 }
 
 model Appointment {
-  id          String      @id @default(cuid())
+  id          String        @id @default(cuid())
   title       String
   description String?
   date        DateTime
-  startTime   String       // exemplo "09:30"
-  endTime     String       // exemplo "11:00"
+  startTime   String
+  endTime     String
   location    String?
-  
+  color       String?
+
   userId      String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   eventId     String?
   event       CalendarEvent? @relation(fields: [eventId], references: [id], onDelete: Cascade)

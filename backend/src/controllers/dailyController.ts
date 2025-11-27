@@ -22,34 +22,22 @@ export const dailyController = {
       const endOfDay = new Date(selectedDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      // 1) Eventos "all-day"
       const events = await prisma.calendarEvent.findMany({
         where: {
           userId,
-          date: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
+          date: { gte: startOfDay, lte: endOfDay },
           allDay: true
         }
       });
 
-      // 2) Compromissos com horário
       const appointments = await prisma.appointment.findMany({
         where: {
           userId,
-          date: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
+          date: { gte: startOfDay, lte: endOfDay },
         }
       });
 
-      return res.json({
-        events,
-        appointments
-      });
-
+      return res.json({ events, appointments });
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: "Erro ao carregar cronograma diário" });
@@ -58,7 +46,16 @@ export const dailyController = {
 
   async createAppointment(req: Request, res: Response) {
     try {
-      const { title, date, startTime, endTime, description, location, eventId } = req.body;
+      const {
+        title,
+        date,
+        startTime,
+        endTime,
+        description,
+        location,
+        eventId,
+        color,
+      } = req.body;
       // @ts-ignore
       const userId = req.userId;
 
@@ -75,15 +72,79 @@ export const dailyController = {
           endTime,
           location,
           eventId,
-          userId
-        }
+          color: color || null,
+          userId,
+        },
       });
 
       return res.status(201).json(appointment);
-
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: "Erro ao criar compromisso" });
     }
-  }
+  },
+
+  async updateAppointment(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const {
+        title,
+        date,
+        startTime,
+        endTime,
+        description,
+        location,
+        eventId,
+        color,
+      } = req.body;
+      // @ts-ignore
+      const userId = req.userId;
+
+      const existing = await prisma.appointment.findUnique({ where: { id } });
+      if (!existing || existing.userId !== userId) {
+        return res.status(404).json({ error: "Compromisso não encontrado" });
+      }
+
+      const data: any = {};
+      if (title !== undefined) data.title = title;
+      if (date !== undefined) data.date = new Date(date);
+      if (startTime !== undefined) data.startTime = startTime;
+      if (endTime !== undefined) data.endTime = endTime;
+      if (description !== undefined) data.description = description;
+      if (location !== undefined) data.location = location;
+      if (eventId !== undefined) data.eventId = eventId;
+      if (color !== undefined) data.color = color;
+
+      const appointment = await prisma.appointment.update({
+        where: { id },
+        data,
+      });
+
+      return res.json(appointment);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Erro ao atualizar compromisso" });
+    }
+  },
+
+  async deleteAppointment(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      // @ts-ignore
+      const userId = req.userId;
+
+      const appointment = await prisma.appointment.findUnique({ where: { id } });
+
+      if (!appointment || appointment.userId !== userId) {
+        return res.status(404).json({ error: "Compromisso não encontrado" });
+      }
+
+      await prisma.appointment.delete({ where: { id } });
+
+      return res.status(204).send();
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Erro ao excluir compromisso" });
+    }
+  },
 };
