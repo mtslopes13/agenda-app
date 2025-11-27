@@ -93,7 +93,7 @@ export const calendarService = {
     const response = await api.get<CalendarEvent[]>('/calendar/events', {
       params: { year, month }
     });
-    return response.data; // agora o TS sabe que é CalendarEvent[]
+    return response.data;
   },
 
   async createEvent(eventData: {
@@ -102,9 +102,29 @@ export const calendarService = {
     allDay: boolean;
     description?: string;
     type?: string;
+    color?: string;
   }): Promise<CalendarEvent> {
     const response = await api.post<CalendarEvent>('/calendar/events', eventData);
     return response.data;
+  },
+
+  async updateEvent(
+    id: string,
+    data: Partial<{
+      title: string;
+      date: string;
+      description: string;
+      allDay: boolean;
+      type: string;
+      color: string;
+    }>
+  ): Promise<CalendarEvent> {
+    const response = await api.patch<CalendarEvent>(`/calendar/events/${id}`, data);
+    return response.data;
+  },
+
+  async deleteEvent(id: string): Promise<void> {
+    await api.delete(`/calendar/events/${id}`);
   }
 };
 
@@ -124,8 +144,30 @@ export const dailyService = {
     description?: string;
     location?: string;
     eventId?: string;
+    color?: string;         // 👈 garantir support
   }): Promise<Appointment> {
     const res = await api.post<Appointment>('/daily/appointment', data);
     return res.data;
+  },
+
+  async updateAppointment(
+    id: string,
+    data: Partial<{
+      title: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+      description: string;
+      location: string;
+      eventId: string;
+      color: string;
+    }>
+  ): Promise<Appointment> {
+    const res = await api.patch<Appointment>(`/daily/appointment/${id}`, data);
+    return res.data;
+  },
+
+  async deleteAppointment(id: string): Promise<void> {
+    await api.delete(`/daily/appointment/${id}`);
   }
 };

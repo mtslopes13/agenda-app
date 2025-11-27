@@ -7,6 +7,7 @@ import {
   Draggable,
   DropResult
 } from '@hello-pangea/dnd';
+import './style/DailyView.css';
 
 const LIST_TYPES: { type: TaskType; label: string; emoji: string }[] = [
   { type: 'META',        label: 'Metas do Dia',        emoji: '🌟' },
@@ -24,7 +25,7 @@ const initialNewTasks: NewTasksState = {
   AMANHA: Array(5).fill(''),
 };
 
-// Coluna 1: 05:00 até 14:00
+// slots de horário
 const COLUMN1_HOURS = [
   '05:00','05:30','06:00','06:30',
   '07:00','07:30','08:00','08:30',
@@ -33,13 +34,22 @@ const COLUMN1_HOURS = [
   '13:00','13:30','14:00'
 ];
 
-// Coluna 2: 14:30 até 23:30
 const COLUMN2_HOURS = [
   '14:30','15:00','15:30','16:00','16:30',
   '17:00','17:30','18:00','18:30',
   '19:00','19:30','20:00','20:30',
   '21:00','21:30','22:00','22:30',
   '23:00','23:30'
+];
+
+// 6 cores pastel (bem diferente do Google Agenda)
+const PASTEL_COLORS = [
+  '#FFB3BA', // rosa
+  '#FFDFBA', // laranja claro
+  '#FFFFBA', // amarelo
+  '#BAFFC9', // verde
+  '#BAE1FF', // azul
+  '#E3BAFF', // roxo
 ];
 
 interface DailyViewProps {
@@ -62,10 +72,20 @@ const DailyView: React.FC<DailyViewProps> = ({ selectedDate }) => {
   const [modalEndTime, setModalEndTime] = useState('');
   const [modalTitle, setModalTitle] = useState('');
   const [modalLocation, setModalLocation] = useState('');
+  const [modalDescription, setModalDescription] = useState('');
+  const [modalColor, setModalColor] = useState(PASTEL_COLORS[0]);
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+
+  // Menu de contexto
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    appointment: Appointment;
+  } | null>(null);
 
   const formatDateParam = (d: Date) => d.toISOString().split('T')[0];
 
-  // ==== TAREFAS (ESQUERDA) ====
+  // ==== TAREFAS ====
 
   useEffect(() => {
     loadTasks();
@@ -189,7 +209,7 @@ const DailyView: React.FC<DailyViewProps> = ({ selectedDate }) => {
     AMANHA: tasks.filter(t => t.type === 'AMANHA'),
   };
 
-  // ==== CRONOGRAMA (DIREITA) ====
+  // ==== CRONOGRAMA ====
 
   const loadDailyData = async () => {
     try {
@@ -208,7 +228,8 @@ const DailyView: React.FC<DailyViewProps> = ({ selectedDate }) => {
     loadDailyData();
   }, [selectedDate]);
 
-  const openAppointmentModal = (startTime: string) => {
+  const openAppointmentModalForCreate = (startTime: string) => {
+    setEditingAppointment(null);
     setModalStartTime(startTime);
 
     const [h, m] = startTime.split(':').map(Number);
@@ -219,27 +240,67 @@ const DailyView: React.FC<DailyViewProps> = ({ selectedDate }) => {
     setModalEndTime(endStr);
     setModalTitle('');
     setModalLocation('');
+    setModalDescription('');
+    setModalColor(PASTEL_COLORS[0]);
     setIsModalOpen(true);
   };
 
-  const handleCreateAppointment = async () => {
+  const openAppointmentModalForEdit = (appointment: Appointment) => {
+    setEditingAppointment(appointment);
+    setModalTitle(appointment.title);
+    setModalStartTime(appointment.startTime);
+    setModalEndTime(appointment.endTime);
+    setModalLocation(appointment.location || '');
+    setModalDescription(appointment.description || '');
+    setModalColor(appointment.color || PASTEL_COLORS[0]);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveAppointment = async () => {
     if (!modalTitle.trim()) {
       alert('Dê um título ao compromisso.');
       return;
     }
 
     try {
-      await dailyService.createAppointment({
-        title: modalTitle,
-        date: formatDateParam(selectedDate),
-        startTime: modalStartTime,
-        endTime: modalEndTime,
-        location: modalLocation || undefined,
-      });
+      if (editingAppointment) {
+        await dailyService.updateAppointment(editingAppointment.id, {
+          title: modalTitle.trim(),
+          startTime: modalStartTime,
+          endTime: modalEndTime,
+          location: modalLocation || undefined,
+          description: modalDescription || undefined,
+          color: modalColor,
+        });
+      } else {
+        await dailyService.createAppointment({
+          title: modalTitle.trim(),
+          date: formatDateParam(selectedDate),
+          startTime: modalStartTime,
+          endTime: modalEndTime,
+          location: modalLocation || undefined,
+          description: modalDescription || undefined,
+          color: modalColor,
+        });
+      }
+
       setIsModalOpen(false);
+      setEditingAppointment(null);
       await loadDailyData();
     } catch (err) {
-      console.error('Erro ao criar compromisso', err);
+      console.error('Erro ao salvar compromisso', err);
+    }
+  };
+
+  const handleDeleteAppointment = async (appointment: Appointment) => {
+    const ok = window.confirm(`Excluir o compromisso "${appointment.title}"?`);
+    if (!ok) return;
+
+    try {
+      await dailyService.deleteAppointment(appointment.id);
+      await loadDailyData();
+    } catch (err) {
+      console.error('Erro ao excluir compromisso', err);
     }
   };
 
@@ -261,40 +322,73 @@ const DailyView: React.FC<DailyViewProps> = ({ selectedDate }) => {
     });
   };
 
-  return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <h2>📅 {selectedDate.toLocaleDateString()}</h2>
+  const renderSlot = (hour: string) => {
+    const slotAppointments = appointmentsAtSlot(hour);
+    const cols = slotAppointments.length > 0 ? slotAppointments.length : 1;
 
+    return (
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1.2fr 2fr',
-          gap: 24,
-          alignItems: 'flex-start',
-        }}
+        key={hour}
+        className="schedule-slot"
+        onClick={() => openAppointmentModalForCreate(hour)}
       >
-        {/* ESQUERDA: LISTAS DE TAREFAS */}
-        <div>
-          <DragDropContext onDragEnd={onDragEnd}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {LIST_TYPES.map(list => (
-                <Droppable droppableId={list.type} key={list.type}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      style={{
-                        padding: 16,
-                        borderRadius: 8,
-                        border: '1px solid #ddd',
-                        backgroundColor: snapshot.isDraggingOver ? '#f0f8ff' : '#f8f9fa',
-                        minHeight: 200,
-                      }}
-                    >
-                      <h3 style={{ marginBottom: 10 }}>
-                        {list.emoji} {list.label}
-                      </h3>
+        <div className="schedule-slot-hour">{hour}</div>
 
+        <div
+          className="schedule-slot-appointments"
+          style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+        >
+          {slotAppointments.map((a) => (
+            <div
+              key={a.id}
+              className="appointment-card"
+              style={{ backgroundColor: a.color || '#d6ffe3' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setContextMenu({
+                  x: e.clientX,
+                  y: e.clientY,
+                  appointment: a,
+                });
+              }}
+              title={`${a.title} (${a.startTime} - ${a.endTime})`}
+            >
+              <span className="appointment-title">{a.title}</span>
+              <span className="appointment-time">
+                {a.startTime} - {a.endTime}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="daily-view">
+      <h2 className="daily-view-title">📅 {selectedDate.toLocaleDateString()}</h2>
+
+      <div className="daily-layout">
+        {/* ESQUERDA: tarefas */}
+        <div className="daily-tasks-column">
+          <DragDropContext onDragEnd={onDragEnd}>
+            {LIST_TYPES.map(list => (
+              <Droppable droppableId={list.type} key={list.type}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="dv-card"
+                    style={{
+                      backgroundColor: snapshot.isDraggingOver ? '#f0f8ff' : '#f8f9fa',
+                    }}
+                  >
+                    <div className="dv-card-header">
+                      <span className="dv-card-header-emoji">{list.emoji}</span>
+                      <span>{list.label}</span>
+                    </div>
+
+                    <div className="dv-task-list">
                       {tasksByType[list.type].map((task, index) => (
                         <Draggable draggableId={task.id} index={index} key={task.id}>
                           {(provided, snapshot) => (
@@ -302,40 +396,29 @@ const DailyView: React.FC<DailyViewProps> = ({ selectedDate }) => {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '8px 10px',
-                                marginBottom: 8,
-                                borderRadius: 6,
-                                border: '1px solid #ccc',
-                                backgroundColor: snapshot.isDragging ? '#e2e6ea' : 'white',
-                                ...provided.draggableProps.style,
-                              }}
+                              className={
+                                'dv-task-item' +
+                                (snapshot.isDragging ? ' dv-task-item-dragging' : '')
+                              }
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div className="dv-task-left">
                                 <input
                                   type="checkbox"
                                   checked={task.completed}
                                   onChange={() => handleToggleCompleted(task)}
                                 />
                                 <span
-                                  style={{
-                                    textDecoration: task.completed ? 'line-through' : 'none',
-                                    color: task.completed ? '#6c757d' : 'inherit',
-                                  }}
+                                  className={
+                                    'dv-task-title' +
+                                    (task.completed ? ' dv-task-title-completed' : '')
+                                  }
                                 >
                                   {task.title}
                                 </span>
                               </div>
                               <button
+                                className="dv-task-delete-btn"
                                 onClick={() => handleDeleteTask(task.id)}
-                                style={{
-                                  backgroundColor: 'transparent',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                }}
                               >
                                 🗑️
                               </button>
@@ -347,259 +430,190 @@ const DailyView: React.FC<DailyViewProps> = ({ selectedDate }) => {
                       {provided.placeholder}
 
                       {newTasks[list.type].map((value, index) => (
-                        <div key={`new-${list.type}-${index}`} style={{ marginBottom: 6 }}>
+                        <div
+                          key={`new-${list.type}-${index}`}
+                          className="dv-task-input-wrapper"
+                        >
                           <input
                             type="text"
                             placeholder="Adicionar..."
                             value={value}
-                            onChange={(e) => handleNewTaskChange(list.type, index, e.target.value)}
+                            onChange={(e) =>
+                              handleNewTaskChange(list.type, index, e.target.value)
+                            }
                             onKeyDown={(e) => handleNewTaskKeyDown(list.type, index, e)}
-                            style={{
-                              width: '100%',
-                              padding: '6px 8px',
-                              borderRadius: 4,
-                              border: '1px dashed #ccc',
-                              fontSize: '0.9rem',
-                            }}
+                            className="dv-task-input"
                           />
                         </div>
                       ))}
                     </div>
-                  )}
-                </Droppable>
-              ))}
-            </div>
+                  </div>
+                )}
+              </Droppable>
+            ))}
           </DragDropContext>
         </div>
 
-        {/* DIREITA: CRONOGRAMA */}
-        <div>
-          {/* Eventos do dia (all-day) */}
-          {events.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <h4>Eventos do dia</h4>
-              {events.map(ev => (
-                <div
-                  key={ev.id}
-                  style={{
-                    background: '#eaf6ff',
-                    padding: '8px 10px',
-                    borderRadius: 4,
-                    border: '1px solid #b5d9ff',
-                    marginBottom: 4,
-                  }}
-                >
-                  {ev.title}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Grade 2 colunas */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 8,
-              border: '1px solid #ddd',
-              borderRadius: 6,
-              padding: 8,
-            }}
-          >
-            {/* Coluna 1 */}
-            <div>
-              <div>
-                {COLUMN1_HOURS.map((hour) => (
-                  <div
-                    key={hour}
-                    onClick={() => openAppointmentModal(hour)}
-                    style={{
-                      padding: '6px 8px',
-                      borderBottom: '1px solid #eee',
-                      minHeight: 32,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <strong style={{ fontSize: '0.8rem', opacity: 0.7 }}>{hour}</strong>
-
-                    {appointmentsAtSlot(hour).map((a) => (
-                      <div
-                        key={a.id}
-                        style={{
-                          marginTop: 4,
-                          background: '#d6ffe3',
-                          border: '1px solid #92e6a7',
-                          padding: '4px 6px',
-                          borderRadius: 4,
-                          fontSize: '0.8rem',
-                        }}
-                      >
-                        {a.title} ({a.startTime} - {a.endTime})
-                      </div>
-                    ))}
-                  </div>
-                ))}
+        {/* DIREITA: cronograma + eventos */}
+        <div className="daily-right">
+          <div className="daily-schedule">
+            <div className="daily-schedule-columns">
+              <div className="schedule-column">
+                {COLUMN1_HOURS.map(renderSlot)}
+              </div>
+              <div className="schedule-column">
+                {COLUMN2_HOURS.map(renderSlot)}
               </div>
             </div>
 
-            {/* Coluna 2 */}
-            <div>
-              <div>
-                {COLUMN2_HOURS.map((hour) => (
-                  <div
-                    key={hour}
-                    onClick={() => openAppointmentModal(hour)}
-                    style={{
-                      padding: '6px 8px',
-                      borderBottom: '1px solid #eee',
-                      minHeight: 32,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <strong style={{ fontSize: '0.8rem', opacity: 0.7 }}>{hour}</strong>
-
-                    {appointmentsAtSlot(hour).map((a) => (
-                      <div
-                        key={a.id}
-                        style={{
-                          marginTop: 4,
-                          background: '#d6ffe3',
-                          border: '1px solid #92e6a7',
-                          padding: '4px 6px',
-                          borderRadius: 4,
-                          fontSize: '0.8rem',
-                        }}
-                      >
-                        {a.title} ({a.startTime} - {a.endTime})
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
+            {loadingDaily && (
+              <p className="daily-loading">Carregando cronograma...</p>
+            )}
           </div>
 
-          {loadingDaily && (
-            <p style={{ marginTop: 8, fontSize: '0.85rem', opacity: 0.7 }}>
-              Carregando cronograma...
-            </p>
-          )}
+          <div className="daily-events-panel">
+            <div className="daily-events-card">
+              <div className="daily-events-title">Eventos do dia</div>
+              {events.length === 0 ? (
+                <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+                  Nenhum evento para este dia.
+                </span>
+              ) : (
+                <div className="daily-events-list">
+                  {events.map(ev => (
+                    <div key={ev.id} className="daily-event-item">
+                      {ev.title}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Modal simples de criação de compromisso */}
-      {isModalOpen && (
+      {/* MENU DE CONTEXTO DO COMPROMISSO */}
+      {contextMenu && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 999,
-          }}
+          className="dv-context-overlay"
+          onClick={() => setContextMenu(null)}
         >
           <div
-            style={{
-              background: 'white',
-              padding: 20,
-              borderRadius: 8,
-              minWidth: 300,
-              maxWidth: 400,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-            }}
+            className="dv-context-menu"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginTop: 0 }}>Novo compromisso</h3>
-            <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>
+            <button
+              className="dv-context-btn"
+              onClick={() => {
+                openAppointmentModalForEdit(contextMenu.appointment);
+                setContextMenu(null);
+              }}
+            >
+              ✏️ Editar compromisso
+            </button>
+            <button
+              className="dv-context-btn dv-context-btn-delete"
+              onClick={() => {
+                handleDeleteAppointment(contextMenu.appointment);
+                setContextMenu(null);
+              }}
+            >
+              🗑️ Excluir
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CRIAÇÃO/EDIÇÃO */}
+      {isModalOpen && (
+        <div className="dv-modal-overlay">
+          <div className="dv-modal">
+            <h3 className="dv-modal-header-text">
+              {editingAppointment ? 'Editar compromisso' : 'Novo compromisso'}
+            </h3>
+            <p className="dv-modal-subtitle">
               Dia {selectedDate.toLocaleDateString()} – horário base {modalStartTime}
             </p>
 
-            <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+            <div className="dv-modal-body">
               <input
                 type="text"
                 placeholder="Título"
                 value={modalTitle}
                 onChange={(e) => setModalTitle(e.target.value)}
-                style={{
-                  padding: 6,
-                  borderRadius: 4,
-                  border: '1px solid #ccc',
-                }}
+                className="dv-input"
               />
-              <div style={{ display: 'flex', gap: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.8rem' }}>Início (HH:MM)</label>
+
+              <div className="dv-time-row">
+                <div className="dv-time-field">
+                  <label className="dv-time-label">Início (HH:MM)</label>
                   <input
                     type="text"
                     value={modalStartTime}
                     onChange={(e) => setModalStartTime(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: 6,
-                      borderRadius: 4,
-                      border: '1px solid #ccc',
-                    }}
+                    className="dv-input"
                   />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '0.8rem' }}>Fim (HH:MM)</label>
+                <div className="dv-time-field">
+                  <label className="dv-time-label">Fim (HH:MM)</label>
                   <input
                     type="text"
                     value={modalEndTime}
                     onChange={(e) => setModalEndTime(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: 6,
-                      borderRadius: 4,
-                      border: '1px solid #ccc',
-                    }}
+                    className="dv-input"
                   />
                 </div>
               </div>
+
               <input
                 type="text"
                 placeholder="Local (opcional)"
                 value={modalLocation}
                 onChange={(e) => setModalLocation(e.target.value)}
-                style={{
-                  padding: 6,
-                  borderRadius: 4,
-                  border: '1px solid #ccc',
-                }}
+                className="dv-input"
               />
+
+              <textarea
+                placeholder="Descrição (opcional)"
+                value={modalDescription}
+                onChange={(e) => setModalDescription(e.target.value)}
+                rows={3}
+                className="dv-textarea"
+              />
+
+              <div className="dv-color-row">
+                <label style={{ fontSize: '0.8rem' }}>Cor do compromisso</label>
+                <div className="dv-color-palette">
+                  {PASTEL_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className={
+                        'dv-color-swatch' +
+                        (modalColor === color ? ' selected' : '')
+                      }
+                      style={{ backgroundColor: color }}
+                      onClick={() => setModalColor(color)}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: 8,
-              }}
-            >
+            <div className="dv-modal-footer">
               <button
-                onClick={() => setIsModalOpen(false)}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: 4,
-                  border: '1px solid #ccc',
-                  background: '#f8f9fa',
-                  cursor: 'pointer',
+                className="dv-btn dv-btn-secondary"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setEditingAppointment(null);
                 }}
               >
                 Cancelar
               </button>
               <button
-                onClick={handleCreateAppointment}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: 4,
-                  border: 'none',
-                  background: '#007bff',
-                  color: 'white',
-                  cursor: 'pointer',
-                }}
+                className="dv-btn dv-btn-primary"
+                onClick={handleSaveAppointment}
               >
                 Salvar
               </button>

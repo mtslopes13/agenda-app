@@ -1,0 +1,157 @@
+.calendar-container {
+  max-width: 1100px;            /* 👈 calendário mais largo */
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.calendar-title {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Aumenta altura de cada dia do mês */
+.calendar-container .fc-daygrid-day-frame {
+  min-height: 110px;
+}
+
+/* Deixa o texto um pouco menor pra caber mais coisa */
+.calendar-container .fc {
+  font-size: 0.9rem;
+}
+
+/* Modal (igual antes) */
+
+.calendar-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.calendar-modal {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  min-width: 320px;
+  max-width: 420px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.calendar-modal-title {
+  margin-top: 0;
+}
+
+.calendar-modal-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.calendar-radio-row {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.calendar-form-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.calendar-input {
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.calendar-textarea {
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  resize: vertical;
+}
+
+.calendar-time-row {
+  display: flex;
+  gap: 8px;
+}
+
+.calendar-time-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-time-label {
+  font-size: 0.8rem;
+  margin-bottom: 2px;
+}
+
+.calendar-color-label {
+  font-size: 0.8rem;
+}
+
+.calendar-color-palette {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.calendar-color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.calendar-color-swatch.selected {
+  border-color: #333333;
+}
+
+.calendar-footer {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-footer-right {
+  display: flex;
+  gap: 8px;
+}
+
+.calendar-btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.calendar-btn-outline {
+  border: 1px solid #007bff;
+  background: #ffffff;
+  color: #007bff;
+}
+
+.calendar-btn-secondary {
+  border: 1px solid #ccc;
+  background: #f8f9fa;
+}
+
+.calendar-btn-primary {
+  border: none;
+  background: #007bff;
+  color: #ffffff;
+}
+
+.calendar-btn-danger {
+  border: 1px solid #dc3545;
+  background: #ffffff;
+  color: #dc3545;
+}

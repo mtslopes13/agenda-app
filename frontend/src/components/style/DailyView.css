@@ -1,0 +1,362 @@
+.daily-view {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.daily-view-title {
+  margin-bottom: 16px;
+}
+
+.daily-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 2.6fr;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* Coluna de tarefas */
+
+.daily-tasks-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dv-card {
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background-color: #f8f9fa;
+  min-height: 200px;
+}
+
+.dv-card-header {
+  margin-bottom: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dv-card-header-emoji {
+  font-size: 1.1rem;
+}
+
+.dv-task-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dv-task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #ffffff;
+}
+
+.dv-task-item-dragging {
+  background-color: #e2e6ea;
+}
+
+.dv-task-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 80%;
+}
+
+.dv-task-title {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dv-task-title-completed {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+
+.dv-task-delete-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.dv-task-input-wrapper {
+  margin-bottom: 6px;
+}
+
+.dv-task-input {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px dashed #ccc;
+  font-size: 0.9rem;
+}
+
+/* Direita: cronograma + eventos */
+
+.daily-right {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.daily-schedule {
+  flex: 2;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.daily-schedule-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.schedule-column {
+  width: 100%;
+}
+
+.schedule-slot {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #eee;
+  height: 48px;
+  cursor: pointer;
+  padding: 2px 4px;
+  box-sizing: border-box;
+}
+
+.schedule-slot-hour {
+  width: 48px;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  display: flex;
+  align-items: flex-start;
+}
+
+.schedule-slot-appointments {
+  flex: 1;
+  display: grid;
+  column-gap: 4px;
+  overflow: hidden;
+  align-items: stretch;
+}
+
+.appointment-card {
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.appointment-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.appointment-time {
+  opacity: 0.7;
+  font-size: 0.7rem;
+}
+
+/* Eventos do dia (card à direita) */
+
+.daily-events-panel {
+  flex: 1.2;
+}
+
+.daily-events-card {
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background-color: #f8f9fa;
+}
+
+.daily-events-title {
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.daily-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.daily-event-item {
+  padding: 6px 8px;
+  border-radius: 4px;
+  background-color: #eaf6ff;
+  border: 1px solid #b5d9ff;
+  font-size: 0.85rem;
+}
+
+/* Loading texto */
+
+.daily-loading {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+/* Context menu */
+
+.dv-context-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: transparent;
+}
+
+.dv-context-menu {
+  position: fixed;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border: 1px solid #ddd;
+  min-width: 180px;
+  padding: 4px 0;
+  z-index: 901;
+}
+
+.dv-context-btn {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.dv-context-btn-delete {
+  color: #dc3545;
+}
+
+/* Modal principal */
+
+.dv-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.dv-modal {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  min-width: 320px;
+  max-width: 420px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.dv-modal-header-text {
+  margin-top: 0;
+}
+
+.dv-modal-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.dv-modal-body {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dv-input,
+.dv-textarea {
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.dv-textarea {
+  resize: vertical;
+}
+
+.dv-time-row {
+  display: flex;
+  gap: 8px;
+}
+
+.dv-time-field {
+  flex: 1;
+}
+
+.dv-time-label {
+  font-size: 0.8rem;
+}
+
+.dv-color-row {
+  margin-top: 4px;
+}
+
+.dv-color-palette {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.dv-color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.dv-color-swatch.selected {
+  border-color: #333;
+}
+
+.dv-modal-footer {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dv-btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.dv-btn-secondary {
+  border: 1px solid #ccc;
+  background: #f8f9fa;
+}
+
+.dv-btn-primary {
+  border: none;
+  background: #007bff;
+  color: white;
+}
